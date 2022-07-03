@@ -1,0 +1,12 @@
+{
+    "cSpell.words": [
+        "BLEU",
+        "datamodule",
+        "dtype",
+        "pretrained",
+        "resnet",
+        "timm",
+        "typer",
+        "unsqueeze"
+    ]
+}
