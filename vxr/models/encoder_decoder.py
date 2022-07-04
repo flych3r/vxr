@@ -61,9 +61,11 @@ class XrayReportGeneration(LightningModule):
                 labels=tokens
             )
         else:
-            return self.generate_caption(encoder_outputs)
+            return self._encoder_outputs_to_decoder_tokens(encoder_outputs)
 
-    def generate_caption(self, encoder_outputs: torch.FloatTensor) -> torch.LongTensor:
+    def _encoder_outputs_to_decoder_tokens(
+        self, encoder_outputs: torch.FloatTensor
+    ) -> torch.LongTensor:
         """
         Generate report tokens.
 
@@ -77,7 +79,7 @@ class XrayReportGeneration(LightningModule):
         ret
             generated report token ids
         """
-        decoder_input_ids = torch.full(
+        decoder_tokens = torch.full(
             (len(encoder_outputs.last_hidden_state), 1),
             self.decoder.config.decoder_start_token_id,
             dtype=torch.long,
@@ -87,15 +89,15 @@ class XrayReportGeneration(LightningModule):
         for _ in range(self.max_length):
             outputs = self.decoder(
                 encoder_outputs=encoder_outputs,
-                decoder_input_ids=decoder_input_ids
+                decoder_input_ids=decoder_tokens
             )
             next_token_logits = outputs.logits[:, -1, :]
             next_token_id = next_token_logits.argmax(1).unsqueeze(-1)
             if torch.eq(next_token_id[:, -1], self.eos_token_id).all():
                 break
-            decoder_input_ids = torch.cat([decoder_input_ids, next_token_id], dim=-1)
+            decoder_tokens = torch.cat([decoder_tokens, next_token_id], dim=-1)
 
-        return decoder_input_ids
+        return decoder_tokens
 
     def training_step(self, batch, batch_idx):
         """
@@ -108,7 +110,7 @@ class XrayReportGeneration(LightningModule):
         """
         output = self(batch)
         loss = output.loss
-        self.log('loss', loss, on_epoch=True, on_step=True)
+        self.log('train/loss', loss, on_epoch=True, on_step=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -133,23 +135,78 @@ class XrayReportGeneration(LightningModule):
         refs = sum([list(x['target']) for x in outputs], [])
 
         metrics = {
-            'BLEU-1': self.metrics['BLEU-1'].compute(
+            'val/BLEU-1': self.metrics['BLEU-1'].compute(
                 references=preds, predictions=refs, max_order=1
             )['bleu'],
-            'BLEU-2': self.metrics['BLEU-2'].compute(
+            'val/BLEU-2': self.metrics['BLEU-2'].compute(
                 references=preds, predictions=refs, max_order=2
             )['bleu'],
-            'BLEU-3': self.metrics['BLEU-3'].compute(
+            'val/BLEU-3': self.metrics['BLEU-3'].compute(
                 references=preds, predictions=refs, max_order=3
             )['bleu'],
-            'BLEU-4': self.metrics['BLEU-4'].compute(
+            'val/BLEU-4': self.metrics['BLEU-4'].compute(
                 references=preds, predictions=refs, max_order=4
             )['bleu'],
-            'METEOR': self.metrics['METEOR'].compute(
+            'val/METEOR': self.metrics['METEOR'].compute(
                 references=preds, predictions=refs
             )['meteor'],
         }
         self.log_dict(metrics, on_epoch=True, prog_bar=True)
+
+    def test_step(self, batch, batch_idx):
+        """
+        Model test step.
+
+        Returns
+        -------
+        ret
+            report predictions and targets
+        """
+        output = self(batch)
+        _, _, tokens, _ = batch
+        return {
+            'pred': self.tokenizer.batch_decode(output),
+            'target': self.tokenizer.batch_decode(tokens)
+        }
+
+    def test_epoch_end(self, outputs):
+        """Model test epoch to log metrics."""
+        preds = sum([list(x['pred']) for x in outputs], [])
+        refs = sum([list(x['target']) for x in outputs], [])
+
+        metrics = {
+            'test/BLEU-1': self.metrics['BLEU-1'].compute(
+                references=preds, predictions=refs, max_order=1
+            )['bleu'],
+            'test/BLEU-2': self.metrics['BLEU-2'].compute(
+                references=preds, predictions=refs, max_order=2
+            )['bleu'],
+            'test/BLEU-3': self.metrics['BLEU-3'].compute(
+                references=preds, predictions=refs, max_order=3
+            )['bleu'],
+            'test/BLEU-4': self.metrics['BLEU-4'].compute(
+                references=preds, predictions=refs, max_order=4
+            )['bleu'],
+            'test/METEOR': self.metrics['METEOR'].compute(
+                references=preds, predictions=refs
+            )['meteor'],
+        }
+        self.log_dict(metrics, on_epoch=True)
+
+    def generate_report(self, x_ray_image: torch.FloatTensor) -> list[str]:
+        """
+        Model prediction step.
+
+        Returns
+        -------
+        ret
+            decoded report predictions
+        """
+        self.eval()
+        with torch.no_grad():
+            token_ids = self([None, x_ray_image, None, None])
+
+        return self.tokenizer.batch_decode(token_ids)
 
     def configure_optimizers(self):
         """Configure model optimizer."""
