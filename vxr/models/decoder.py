@@ -8,14 +8,16 @@ from transformers import T5ForConditionalGeneration
 
 
 class T5Decoder(LightningModule):
-    """Language Model Decoder using T5 Efficient Small dm768."""
+    """Language Model Decoder using T5ForConditionalGeneration."""
 
     def __init__(
         self,
-        pre_trained: str = 'google/t5-efficient-small-dm768'
+        pre_trained: str = 'google/t5-efficient-base'
     ):
         super().__init__()
         self.model = T5ForConditionalGeneration.from_pretrained(pre_trained)
+        if self.model.encoder:
+            del self.model.encoder
         self.config = self.model.config
 
     def forward(

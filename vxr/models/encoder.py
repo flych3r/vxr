@@ -7,7 +7,7 @@ from transformers import ViTModel
 
 
 class VitEncoder(LightningModule):
-    """Visual Extractor Encoder using ViT Base 16-224."""
+    """Visual Extractor Encoder using ViTModel."""
 
     def __init__(
         self,

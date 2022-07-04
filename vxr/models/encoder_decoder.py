@@ -18,11 +18,13 @@ class XrayReportGeneration(LightningModule):
         self,
         max_length: int,
         tokenizer: PreTrainedTokenizer,
-        learning_rate: float
+        learning_rate: float,
+        encoder: str = 'google/vit-base-patch16-224-in21k',
+        decoder: str = 'google/t5-efficient-base'
     ):
         super().__init__()
-        self.encoder = VitEncoder()
-        self.decoder = T5Decoder()
+        self.encoder = VitEncoder(encoder)
+        self.decoder = T5Decoder(decoder)
         self.max_length = max_length
         self.tokenizer = tokenizer
         self.eos_token_id = self.tokenizer.eos_token_id
