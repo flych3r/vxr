@@ -1,10 +1,7 @@
 evaluate
-ipykernel
-ipywidgets
 nltk
 pillow
 pytorch-lightning
-timm
 torch
 tqdm
 transformers
