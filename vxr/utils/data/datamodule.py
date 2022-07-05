@@ -8,10 +8,10 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from transformers import ImageFeatureExtractionMixin, PreTrainedTokenizer
 
-from vxr.utils.data.dataset import XRayReportDataset
+from vxr.utils.data.dataset import XrayReportDataset
 
 
-class XRayReportDataModule(LightningDataModule):
+class XrayReportDataModule(LightningDataModule):
     """DataModule class that contains the X-ray images and reports."""
 
     def __init__(
@@ -30,12 +30,12 @@ class XRayReportDataModule(LightningDataModule):
         self.tokenizer = tokenizer
         self.transform = transform
         self.batch_size = batch_size
-        self.dataset: dict[str, XRayReportDataset] = dict()
+        self.dataset: dict[str, XrayReportDataset] = dict()
 
     def setup(self, stage: str = None):
         """Initialize the train, val and test datasets."""
         for split in ['train', 'val', 'test']:
-            self.dataset[split] = XRayReportDataset(
+            self.dataset[split] = XrayReportDataset(
                 split,
                 self.image_dir,
                 self.ann_path,
@@ -44,14 +44,14 @@ class XRayReportDataModule(LightningDataModule):
                 self.transform,
             )
 
-    def train_dataloader(self) -> DataLoader[XRayReportDataset]:
+    def train_dataloader(self) -> DataLoader[XrayReportDataset]:
         """Create the train dataloader."""
         return DataLoader(self.dataset['train'], batch_size=self.batch_size)
 
-    def val_dataloader(self) -> DataLoader[XRayReportDataset]:
+    def val_dataloader(self) -> DataLoader[XrayReportDataset]:
         """Create the val dataloader."""
         return DataLoader(self.dataset['val'], batch_size=self.batch_size)
 
-    def test_dataloader(self) -> DataLoader[XRayReportDataset]:
+    def test_dataloader(self) -> DataLoader[XrayReportDataset]:
         """Create the test dataloader."""
         return DataLoader(self.dataset['test'], batch_size=self.batch_size)

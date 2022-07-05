@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 from transformers import ImageFeatureExtractionMixin, PreTrainedTokenizer
 
 
-class XRayReportDataset(Dataset):
+class XrayReportDataset(Dataset):
     """Dataset class that contains the X-ray images and reports."""
 
     def __init__(
