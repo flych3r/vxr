@@ -16,8 +16,6 @@ class T5Decoder(LightningModule):
     ):
         super().__init__()
         self.model = T5ForConditionalGeneration.from_pretrained(pre_trained)
-        if self.model.encoder:
-            del self.model.encoder
         self.config = self.model.config
 
     def forward(
