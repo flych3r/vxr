@@ -1,5 +1,7 @@
 """Generation."""
 
+from __future__ import annotations
+
 import torch
 from pytorch_lightning import LightningModule
 from torch.utils.data import DataLoader, TensorDataset
