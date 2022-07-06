@@ -116,7 +116,7 @@ class XrayReportGeneration(LightningModule):
         )
         self.log_dict(metrics, on_epoch=True, prog_bar=True)
 
-    def test__step(
+    def test_step(
         self,
         batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
         batch_idx: int
