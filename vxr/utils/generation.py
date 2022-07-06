@@ -38,7 +38,9 @@ def beam_search(
         device=model.device,
     )
 
-    outputs = model(encoder_outputs=encoder_outputs, decoder_input_ids=decoder_tokens)
+    outputs = model.decoder(
+        encoder_outputs=encoder_outputs, decoder_input_ids=decoder_tokens
+    )
     next_token_logits = outputs.logits[:, -1, :]
     vocabulary_size = next_token_logits.shape[-1]
 
@@ -57,7 +59,7 @@ def beam_search(
         )
         beam_next_token_logits = []
         for eo, dt in DataLoader(beam_dataset, batch_size=16):
-            beam_outputs = model(encoder_outputs=[eo], decoder_input_ids=dt)
+            beam_outputs = model.decoder(encoder_outputs=[eo], decoder_input_ids=dt)
             beam_next_token_logits.append(beam_outputs.logits[:, -1, :])
 
             next_probabilities = torch.cat(beam_next_token_logits, axis=0).log_softmax(
