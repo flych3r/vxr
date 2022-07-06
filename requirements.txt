@@ -1,6 +1,6 @@
 evaluate~=0.1.2
 nltk~=3.7
-pillow>=9.1.0
+pillow>=7.1.2
 pytorch-lightning>=1.6.3
 torch>=1.11.0
 tqdm~=4.64.0

@@ -4,17 +4,19 @@ from __future__ import annotations
 
 import torch
 from pytorch_lightning import LightningModule
-from transformers import T5ForConditionalGeneration
+from transformers import AutoModelForSeq2SeqLM
 
 
-class T5Decoder(LightningModule):
-    """Language Model Decoder using T5ForConditionalGeneration."""
+class LanguageModelDecoder(LightningModule):
+    """Language Model Decoder."""
 
     def __init__(self, pre_trained: str = 'google/t5-efficient-base'):
         super().__init__()
-        self.model = T5ForConditionalGeneration.from_pretrained(pre_trained)
-        if self.model.encoder:
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(pre_trained)
+        try:
             del self.model.encoder
+        except AttributeError:
+            pass
         self.config = self.model.config
 
     def forward(

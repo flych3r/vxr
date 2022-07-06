@@ -30,5 +30,5 @@ def eval_generated_texts(
             f'{stage}/BLEU-{i}': s
             for i, s in enumerate(bleu_score['precisions'], start=1)
         },
-        **meteor_score
+        f'{stage}/METEOR': meteor_score['meteor']
     }
