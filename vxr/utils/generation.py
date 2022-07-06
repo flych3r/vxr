@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from vxr.models.encoder_decoder import XrayReportGeneration
+if TYPE_CHECKING:
+    from vxr.models.encoder_decoder import XrayReportGeneration
 
 
 def beam_search(
