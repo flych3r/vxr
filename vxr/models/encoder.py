@@ -12,7 +12,7 @@ class VitEncoder(LightningModule):
     def __init__(
         self,
         pre_trained: str = 'google/vit-base-patch16-224-in21k',
-        freeze: bool = False
+        freeze: bool = False,
     ):
         super().__init__()
         self.model = ViTModel.from_pretrained(pre_trained)
