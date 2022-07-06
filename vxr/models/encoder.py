@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from pytorch_lightning import LightningModule
-from transformers import ViTModel
+from transformers import AutoModel
 
 
-class VitEncoder(LightningModule):
-    """Visual Extractor Encoder using ViTModel."""
+class VisualExtractorEncoder(LightningModule):
+    """Visual Extractor Encoder."""
 
     def __init__(
         self,
@@ -15,7 +15,7 @@ class VitEncoder(LightningModule):
         freeze: bool = False,
     ):
         super().__init__()
-        self.model = ViTModel.from_pretrained(pre_trained)
+        self.model = AutoModel.from_pretrained(pre_trained)
         self.config = self.model.config
 
         if freeze:

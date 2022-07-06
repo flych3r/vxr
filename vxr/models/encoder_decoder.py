@@ -8,8 +8,9 @@ import torch
 from pytorch_lightning import LightningModule
 from transformers import PreTrainedTokenizer
 
-from vxr.models.decoder import T5Decoder
-from vxr.models.encoder import VitEncoder
+from vxr.models.config import check_encoder_decoder_compatible
+from vxr.models.decoder import LanguageModelDecoder
+from vxr.models.encoder import VisualExtractorEncoder
 from vxr.utils.generation import beam_search, greedy_search
 from vxr.utils.metrics import eval_generated_texts
 
@@ -28,8 +29,10 @@ class XrayReportGeneration(LightningModule):
         beam: bool = False,
     ):
         super().__init__()
-        self.encoder = VitEncoder(encoder)
-        self.decoder = T5Decoder(decoder)
+
+        check_encoder_decoder_compatible(encoder, decoder)
+        self.encoder = VisualExtractorEncoder(encoder)
+        self.decoder = LanguageModelDecoder(decoder)
 
         self.learning_rate = learning_rate
         self.max_length = max_length
@@ -65,7 +68,11 @@ class XrayReportGeneration(LightningModule):
             return self.decoder(encoder_outputs=encoder_outputs, labels=tokens)
         return self.encoder_outputs_to_decoder_tokens(self, encoder_outputs)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(
+        self,
+        batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+        batch_idx: int
+    ) -> torch.FloatTensor:
         """
         Model training step.
 
@@ -79,7 +86,11 @@ class XrayReportGeneration(LightningModule):
         self.log('train/loss', loss, on_epoch=True, on_step=True)
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(
+        self,
+        batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+        batch_idx: int
+    ) -> dict[str, list[str]]:
         """
         Model validation step.
 
@@ -95,17 +106,21 @@ class XrayReportGeneration(LightningModule):
             'target': self.tokenizer.batch_decode(tokens),
         }
 
-    def validation_epoch_end(self, outputs):
+    def validation_epoch_end(self, outputs: list[dict[str, list[str]]]):
         """Model validation epoch to log metrics."""
-        refs = sum([list(x['target']) for x in outputs], [])
-        preds = sum([list(x['pred']) for x in outputs], [])
+        refs: list[str] = sum([list(x['target']) for x in outputs], [])
+        preds: list[str] = sum([list(x['pred']) for x in outputs], [])
 
         metrics = eval_generated_texts(
             self.metrics, refs, preds, 'val'
         )
         self.log_dict(metrics, on_epoch=True, prog_bar=True)
 
-    def test_step(self, batch, batch_idx):
+    def test__step(
+        self,
+        batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+        batch_idx: int
+    ) -> dict[str, list[str]]:
         """
         Model test step.
 
@@ -121,17 +136,17 @@ class XrayReportGeneration(LightningModule):
             'target': self.tokenizer.batch_decode(tokens),
         }
 
-    def test_epoch_end(self, outputs):
+    def test_epoch_end(self, outputs: list[dict[str, list[str]]]):
         """Model test epoch to log metrics."""
-        preds = sum([list(x['pred']) for x in outputs], [])
-        refs = sum([list(x['target']) for x in outputs], [])
+        refs: list[str] = sum([list(x['target']) for x in outputs], [])
+        preds: list[str] = sum([list(x['pred']) for x in outputs], [])
 
         metrics = eval_generated_texts(
             self.metrics, refs, preds, 'test'
         )
         self.log_dict(metrics, on_epoch=True)
 
-    def generate(self, x_ray_image: torch.FloatTensor) -> list[str]:
+    def generate(self, x_ray_images: torch.FloatTensor) -> list[str]:
         """
         Model prediction step.
 
@@ -142,7 +157,7 @@ class XrayReportGeneration(LightningModule):
         """
         self.eval()
         with torch.no_grad():
-            token_ids = self([None, x_ray_image, None, None])
+            token_ids = self([None, x_ray_images, None, None])
 
         return self.tokenizer.batch_decode(token_ids, skip_special_tokens=True)
 
