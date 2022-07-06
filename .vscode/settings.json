@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "arange",
         "argmax",
         "BLEU",
         "datamodule",
@@ -9,7 +10,9 @@
         "preds",
         "pretrained",
         "resnet",
+        "softmax",
         "timm",
+        "topk",
         "typer",
         "unsqueeze"
     ]

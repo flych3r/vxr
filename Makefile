@@ -19,7 +19,7 @@ clean:
 	rm -rf `find . -type d -name .ipynb_checkpoints`
 	rm -f .coverage
 
-lint: clean
+lint:
 	flake8; mypy; pydocstyle; black vxr
 
 clean-all: clean

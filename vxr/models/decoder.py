@@ -10,10 +10,7 @@ from transformers import T5ForConditionalGeneration
 class T5Decoder(LightningModule):
     """Language Model Decoder using T5ForConditionalGeneration."""
 
-    def __init__(
-        self,
-        pre_trained: str = 'google/t5-efficient-base'
-    ):
+    def __init__(self, pre_trained: str = 'google/t5-efficient-base'):
         super().__init__()
         self.model = T5ForConditionalGeneration.from_pretrained(pre_trained)
         if self.model.encoder:
@@ -24,7 +21,7 @@ class T5Decoder(LightningModule):
         self,
         encoder_outputs: torch.FloatTensor,
         labels: torch.LongTensor = None,
-        decoder_input_ids: torch.LongTensor = None
+        decoder_input_ids: torch.LongTensor = None,
     ):
         """
         Forward pass fot the decoder model.
@@ -44,9 +41,7 @@ class T5Decoder(LightningModule):
             logits on training or output tokens on validation
         """
         if self.training:
-            return self.model(
-                encoder_outputs=encoder_outputs, labels=labels
-            )
+            return self.model(encoder_outputs=encoder_outputs, labels=labels)
         return self.model(
             encoder_outputs=encoder_outputs, decoder_input_ids=decoder_input_ids
         )

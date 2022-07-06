@@ -9,6 +9,7 @@ from transformers import PreTrainedTokenizer
 
 from vxr.models.decoder import T5Decoder
 from vxr.models.encoder import VitEncoder
+from vxr.utils.generation import beam_search, greedy_search
 
 
 class XrayReportGeneration(LightningModule):
@@ -20,15 +21,21 @@ class XrayReportGeneration(LightningModule):
         tokenizer: PreTrainedTokenizer,
         learning_rate: float,
         encoder: str = 'google/vit-base-patch16-224-in21k',
-        decoder: str = 'google/t5-efficient-base'
+        decoder: str = 'google/t5-efficient-base',
+        beam: bool = False,
     ):
         super().__init__()
         self.encoder = VitEncoder(encoder)
         self.decoder = T5Decoder(decoder)
         self.max_length = max_length
         self.tokenizer = tokenizer
+        self.bos_token_id = self.decoder.config.decoder_start_token_id
         self.eos_token_id = self.tokenizer.eos_token_id
         self.learning_rate = learning_rate
+
+        self.encoder_outputs_to_decoder_tokens = (
+            beam_search if beam else greedy_search
+        )
 
         self.metrics = {
             'BLEU-1': evaluate.load('bleu'),
@@ -58,48 +65,8 @@ class XrayReportGeneration(LightningModule):
         encoder_outputs = self.encoder(imgs)
 
         if self.training:
-            return self.decoder(
-                encoder_outputs=encoder_outputs,
-                labels=tokens
-            )
-        else:
-            return self._encoder_outputs_to_decoder_tokens(encoder_outputs)
-
-    def _encoder_outputs_to_decoder_tokens(
-        self, encoder_outputs: torch.FloatTensor
-    ) -> torch.LongTensor:
-        """
-        Generate report tokens.
-
-        Parameters
-        ----------
-        encoder_outputs
-            features extracted by the encoder
-
-        Returns
-        -------
-        ret
-            generated report token ids
-        """
-        decoder_tokens = torch.full(
-            (len(encoder_outputs.last_hidden_state), 1),
-            self.decoder.config.decoder_start_token_id,
-            dtype=torch.long,
-            device=self.device
-        )
-
-        for _ in range(self.max_length):
-            outputs = self.decoder(
-                encoder_outputs=encoder_outputs,
-                decoder_input_ids=decoder_tokens
-            )
-            next_token_logits = outputs.logits[:, -1, :]
-            next_token_id = next_token_logits.argmax(1).unsqueeze(-1)
-            if torch.eq(next_token_id[:, -1], self.eos_token_id).all():
-                break
-            decoder_tokens = torch.cat([decoder_tokens, next_token_id], dim=-1)
-
-        return decoder_tokens
+            return self.decoder(encoder_outputs=encoder_outputs, labels=tokens)
+        return self.encoder_outputs_to_decoder_tokens(self, encoder_outputs)
 
     def training_step(self, batch, batch_idx):
         """
@@ -128,7 +95,7 @@ class XrayReportGeneration(LightningModule):
         _, _, tokens, _ = batch
         return {
             'pred': self.tokenizer.batch_decode(output),
-            'target': self.tokenizer.batch_decode(tokens)
+            'target': self.tokenizer.batch_decode(tokens),
         }
 
     def validation_epoch_end(self, outputs):
@@ -168,7 +135,7 @@ class XrayReportGeneration(LightningModule):
         _, _, tokens, _ = batch
         return {
             'pred': self.tokenizer.batch_decode(output),
-            'target': self.tokenizer.batch_decode(tokens)
+            'target': self.tokenizer.batch_decode(tokens),
         }
 
     def test_epoch_end(self, outputs):
@@ -195,7 +162,7 @@ class XrayReportGeneration(LightningModule):
         }
         self.log_dict(metrics, on_epoch=True)
 
-    def generate_report(self, x_ray_image: torch.FloatTensor) -> list[str]:
+    def generate(self, x_ray_image: torch.FloatTensor) -> list[str]:
         """
         Model prediction step.
 
@@ -208,7 +175,7 @@ class XrayReportGeneration(LightningModule):
         with torch.no_grad():
             token_ids = self([None, x_ray_image, None, None])
 
-        return self.tokenizer.batch_decode(token_ids)
+        return self.tokenizer.batch_decode(token_ids, skip_special_tokens=True)
 
     def configure_optimizers(self):
         """Configure model optimizer."""
