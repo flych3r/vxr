@@ -63,7 +63,7 @@ class XrayReportGeneration(LightningModule):
 
         if self.training:
             return self.decoder(encoder_outputs=encoder_outputs, labels=tokens)
-        return self.encoder_outputs_to_decoder_tokens(self, encoder_outputs)
+        return self.encoder_outputs_to_decoder_tokens(self.decoder, encoder_outputs)
 
     def training_step(self, batch, batch_idx):
         """
