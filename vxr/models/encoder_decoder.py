@@ -107,8 +107,8 @@ class XrayReportGeneration(LightningModule):
         output = self(batch)
         _, _, tokens, _ = batch
         return {
-            'pred': self.tokenizer.batch_decode(output),
-            'target': self.tokenizer.batch_decode(tokens),
+            'pred': self.tokenizer.batch_decode(output, skip_special_tokens=True),
+            'target': self.tokenizer.batch_decode(tokens, skip_special_tokens=True),
         }
 
     def validation_epoch_end(self, outputs: list[dict[str, list[str]]]):
@@ -137,8 +137,8 @@ class XrayReportGeneration(LightningModule):
         output = self(batch)
         _, _, tokens, _ = batch
         return {
-            'pred': self.tokenizer.batch_decode(output),
-            'target': self.tokenizer.batch_decode(tokens),
+            'pred': self.tokenizer.batch_decode(output, skip_special_tokens=True),
+            'target': self.tokenizer.batch_decode(tokens, skip_special_tokens=True),
         }
 
     def test_epoch_end(self, outputs: list[dict[str, list[str]]]):
