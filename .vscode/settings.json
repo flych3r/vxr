@@ -1,0 +1,16 @@
+{
+    "cSpell.words": [
+        "argmax",
+        "BLEU",
+        "datamodule",
+        "dtype",
+        "logits",
+        "optim",
+        "preds",
+        "pretrained",
+        "resnet",
+        "timm",
+        "typer",
+        "unsqueeze"
+    ]
+}
