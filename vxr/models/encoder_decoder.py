@@ -26,7 +26,8 @@ class XrayReportGeneration(LightningModule):
         metrics: dict[str, Callable],
         encoder: str = 'google/vit-base-patch16-224-in21k',
         decoder: str = 'google/t5-efficient-base',
-        beam: bool = False,
+        repetition_penalty: float = 1,
+        beam_width: int = 1,
     ):
         super().__init__()
 
@@ -39,10 +40,12 @@ class XrayReportGeneration(LightningModule):
         self.tokenizer = tokenizer
         self.bos_token_id = self.decoder.config.decoder_start_token_id
         self.eos_token_id = self.tokenizer.eos_token_id
+        self.repetition_penalty = repetition_penalty
+        self.beam_width = beam_width
 
         self.metrics = metrics
         self.encoder_outputs_to_decoder_tokens = (
-            beam_search if beam else greedy_search
+            beam_search if self.beam_width > 1 else greedy_search
         )
 
     def forward(
@@ -66,7 +69,9 @@ class XrayReportGeneration(LightningModule):
 
         if self.training:
             return self.decoder(encoder_outputs=encoder_outputs, labels=tokens)
-        return self.encoder_outputs_to_decoder_tokens(self, encoder_outputs)
+        return self.encoder_outputs_to_decoder_tokens(  # type: ignore[operator]
+            self, encoder_outputs
+        )
 
     def training_step(
         self,
@@ -102,8 +107,8 @@ class XrayReportGeneration(LightningModule):
         output = self(batch)
         _, _, tokens, _ = batch
         return {
-            'pred': self.tokenizer.batch_decode(output),
-            'target': self.tokenizer.batch_decode(tokens),
+            'pred': self.tokenizer.batch_decode(output, skip_special_tokens=True),
+            'target': self.tokenizer.batch_decode(tokens, skip_special_tokens=True),
         }
 
     def validation_epoch_end(self, outputs: list[dict[str, list[str]]]):
@@ -132,8 +137,8 @@ class XrayReportGeneration(LightningModule):
         output = self(batch)
         _, _, tokens, _ = batch
         return {
-            'pred': self.tokenizer.batch_decode(output),
-            'target': self.tokenizer.batch_decode(tokens),
+            'pred': self.tokenizer.batch_decode(output, skip_special_tokens=True),
+            'target': self.tokenizer.batch_decode(tokens, skip_special_tokens=True),
         }
 
     def test_epoch_end(self, outputs: list[dict[str, list[str]]]):
