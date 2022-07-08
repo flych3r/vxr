@@ -16,21 +16,28 @@ class XrayReportGenerationConfig(PretrainedConfig):
 
     def __init__(
         self,
-        pretrained_encoder: str = 'google/vit-base-patch16-224-in21k',
-        pretrained_decoder: str = 'google/t5-efficient-base',
+        pretrained_encoder: str | dict = 'google/vit-base-patch16-224-in21k',
+        pretrained_decoder: str | dict = 'google/t5-efficient-base',
         **kwargs
     ):
         """Creates a new configuration.
 
         Args:
-            pretrained_encoder: encoder model
-            pretrained_decoder: decoder model
+            pretrained_encoder:
+                encoder model
+            pretrained_decoder:
+                decoder model
 
         Raises:
             ValueError:
                 Encoder and decoder model sizes are not compatible.
         """
         super().__init__(**kwargs)
+        if isinstance(pretrained_encoder, dict):
+            pretrained_encoder = pretrained_encoder['_name_or_path']
+        if isinstance(pretrained_decoder, dict):
+            pretrained_decoder = pretrained_decoder['_name_or_path']
+
         self.pretrained_encoder = AutoConfig.from_pretrained(pretrained_encoder)
         self.pretrained_decoder = AutoConfig.from_pretrained(pretrained_decoder)
         enc_size = self.pretrained_encoder.hidden_size
@@ -39,6 +46,7 @@ class XrayReportGenerationConfig(PretrainedConfig):
             raise ValueError(
                 f'Encoder and Decoder must have same sizes ({enc_size} != {dec_size})'
             )
+
         self.dim = enc_size
         self.freeze_encoder = False
         self.is_encoder_decoder = True

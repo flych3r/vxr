@@ -1,8 +1,9 @@
 evaluate~=0.1.2
+datasets~=2.3.2
 nltk~=3.7
 pillow>=7.1.2
 pytorch-lightning>=1.6.3
 torch>=1.11.0
-tqdm~=4.64.0
+tqdm>=4.64.0
 transformers>=4.18.0
 wandb>=0.12.16

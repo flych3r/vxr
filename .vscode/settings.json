@@ -14,6 +14,7 @@
         "timm",
         "topk",
         "typer",
-        "unsqueeze"
+        "unsqueeze",
+        "xrrg"
     ]
 }
