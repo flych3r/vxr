@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 if TYPE_CHECKING:
-    from vxr.models.encoder_decoder import XrayReportGeneration
+    from vxr.models.modeling import XrayReportGeneration
 
 
 def beam_search(
@@ -17,8 +17,7 @@ def beam_search(
     beam_width: int = None,
     penalty: float = None
 ) -> torch.LongTensor:
-    """
-    BEAM searched report tokens.
+    """BEAM searched report tokens.
 
     Parameters
     ----------
@@ -26,7 +25,7 @@ def beam_search(
         model to use for predictions
     encoder_outputs
         features extracted by the encoder
-    beam width
+    beam_width
         number of nodes of beam search
     penalty
         penalty factor for token repetitions
@@ -117,8 +116,7 @@ def greedy_search(
     encoder_outputs: torch.FloatTensor,
     penalty: float = None
 ) -> torch.LongTensor:
-    """
-    Greedy searched report tokens.
+    """Greedy searched report tokens.
 
     Parameters
     ----------
@@ -168,8 +166,7 @@ def repetition_penalty(
     seen_tokens: torch.LongTensor,
     penalty: float
 ) -> torch.FloatTensor:
-    """
-    Penalize token repetitions on prediction.
+    """Penalize token repetitions on prediction.
 
     Parameters
     ----------
