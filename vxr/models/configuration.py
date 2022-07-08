@@ -23,10 +23,8 @@ class XrayReportGenerationConfig(PretrainedConfig):
         """Creates a new configuration.
 
         Args:
-            pretrained_encoder:
-                encoder model
-            pretrained_decoder:
-                decoder model
+            pretrained_encoder: encoder model
+            pretrained_decoder: decoder model
 
         Raises:
             ValueError:
