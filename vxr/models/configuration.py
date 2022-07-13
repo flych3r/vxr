@@ -29,6 +29,10 @@ class XrayReportGenerationConfig(PretrainedConfig):
         Args:
             pretrained_encoder: encoder model
             pretrained_decoder: decoder model
+            use_pretrained_encoder: use only encoder architecture, no pretrained weights
+            use_pretrained_decoder: use only decoder architecture, no pretrained weights
+            freeze_encoder: freeze encoder weights for training
+            freeze_decoder: freeze decoder weights for training
 
         Raises:
             ValueError:
