@@ -23,20 +23,50 @@ class XrayReportGeneration(PreTrainedModel):
             config: Model configuration.
         """
         super().__init__(config)
-        self.encoder: AutoModel = AutoModel.from_pretrained(
-            self.config.pretrained_encoder.name_or_path
-        )
-        self.decoder: AutoModelForSeq2SeqLM = AutoModelForSeq2SeqLM.from_pretrained(
-            self.config.pretrained_decoder.name_or_path
-        )
+
+        self.encoder = self._create_encoder()
+        self.decoder = self._create_decoder()
         self.main_input_name: str = self.encoder.main_input_name
+        self._reorder_cache = self.decoder._reorder_cache
+
+    def _create_encoder(self) -> AutoModel:
+        """Creates model encoder using config."""
+        if self.config.use_pretrained_encoder:
+            encoder: AutoModel = AutoModel.from_pretrained(  # type: ignore[no-redef]  # noqa: E501
+                self.config.pretrained_encoder.name_or_path
+            )
+        else:
+            encoder: AutoModel = AutoModel.from_config(  # type: ignore[no-redef]  # noqa: E501
+                self.config.pretrained_encoder
+            )
+
         if self.config.freeze_encoder:
-            for param in self.encoder.parameters():
+            for param in encoder.parameters():
                 param.requires_grad = False
         try:
-            del self.decoder.encoder
+            del encoder.decoder
         except AttributeError:
             pass
+        return encoder
+
+    def _create_decoder(self) -> AutoModelForSeq2SeqLM:
+        """Creates model decoder using config."""
+        if self.config.use_pretrained_decoder:
+            decoder: AutoModelForSeq2SeqLM = AutoModelForSeq2SeqLM.from_pretrained(  # type: ignore[no-redef]  # noqa: E501
+                self.config.pretrained_decoder.name_or_path
+            )
+        else:
+            decoder: AutoModelForSeq2SeqLM = AutoModelForSeq2SeqLM.from_config(  # type: ignore[no-redef]  # noqa: E501
+                self.config.pretrained_decoder
+            )
+        if self.config.freeze_decoder:
+            for param in decoder.parameters():
+                param.requires_grad = False
+        try:
+            del decoder.encoder
+        except AttributeError:
+            pass
+        return decoder
 
     def forward(
         self,

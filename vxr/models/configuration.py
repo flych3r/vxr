@@ -18,6 +18,10 @@ class XrayReportGenerationConfig(PretrainedConfig):
         self,
         pretrained_encoder: str | dict = 'google/vit-base-patch16-224-in21k',
         pretrained_decoder: str | dict = 'google/t5-efficient-base',
+        use_pretrained_encoder: bool = True,
+        use_pretrained_decoder: bool = True,
+        freeze_encoder: bool = False,
+        freeze_decoder: bool = False,
         **kwargs
     ):
         """Creates a new configuration.
@@ -31,10 +35,6 @@ class XrayReportGenerationConfig(PretrainedConfig):
                 Encoder and decoder model sizes are not compatible.
         """
         super().__init__(**kwargs)
-        if isinstance(pretrained_encoder, dict):
-            pretrained_encoder = pretrained_encoder['_name_or_path']
-        if isinstance(pretrained_decoder, dict):
-            pretrained_decoder = pretrained_decoder['_name_or_path']
 
         self.pretrained_encoder = AutoConfig.from_pretrained(pretrained_encoder)
         self.pretrained_decoder = AutoConfig.from_pretrained(pretrained_decoder)
@@ -46,7 +46,10 @@ class XrayReportGenerationConfig(PretrainedConfig):
             )
 
         self.dim = enc_size
-        self.freeze_encoder = False
+        self.use_pretrained_encoder = use_pretrained_encoder
+        self.use_pretrained_decoder = use_pretrained_decoder
+        self.freeze_encoder = freeze_encoder
+        self.freeze_decoder = freeze_decoder
         self.is_encoder_decoder = True
         self.decoder_start_token_id = self.pretrained_decoder.pad_token_id
 
