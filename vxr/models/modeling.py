@@ -43,10 +43,8 @@ class XrayReportGeneration(PreTrainedModel):
         if self.config.freeze_encoder:
             for param in encoder.parameters():
                 param.requires_grad = False
-        try:
+        if hasattr(encoder, 'decoder'):
             del encoder.decoder
-        except AttributeError:
-            pass
         return encoder
 
     def _create_decoder(self) -> AutoModelForSeq2SeqLM:
@@ -62,10 +60,10 @@ class XrayReportGeneration(PreTrainedModel):
         if self.config.freeze_decoder:
             for param in decoder.parameters():
                 param.requires_grad = False
-        try:
+        if hasattr(decoder, 'encoder'):
             del decoder.encoder
-        except AttributeError:
-            pass
+        elif hasattr(decoder.model, 'encoder'):
+            del decoder.model.encoder
         return decoder
 
     def forward(

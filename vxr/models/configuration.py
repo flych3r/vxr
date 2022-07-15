@@ -50,6 +50,10 @@ class XrayReportGenerationConfig(PretrainedConfig):
             )
 
         self.dim = enc_size
+        self.architectures = (
+            self.pretrained_encoder.architectures
+            + self.pretrained_decoder.architectures
+        )
         self.use_pretrained_encoder = use_pretrained_encoder
         self.use_pretrained_decoder = use_pretrained_decoder
         self.freeze_encoder = freeze_encoder
