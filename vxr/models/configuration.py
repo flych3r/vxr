@@ -42,7 +42,11 @@ class XrayReportGenerationConfig(PretrainedConfig):
 
         self.pretrained_encoder = AutoConfig.from_pretrained(pretrained_encoder)
         self.pretrained_decoder = AutoConfig.from_pretrained(pretrained_decoder)
-        enc_size = self.pretrained_encoder.hidden_size
+        enc_size = (
+            self.pretrained_encoder.hidden_size
+            if hasattr(self.pretrained_encoder, 'hidden_size')
+            else self.pretrained_encoder.hidden_sizes[-1]
+        )
         dec_size = self.pretrained_decoder.d_model
         if enc_size != dec_size:
             raise ValueError(

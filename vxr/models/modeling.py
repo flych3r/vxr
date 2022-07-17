@@ -92,7 +92,7 @@ class XrayReportGeneration(PreTrainedModel):
             logits on training or output tokens on validation
         """
         if encoder_outputs is None:
-            encoder_outputs = self.encoder(pixel_values)
+            encoder_outputs = self.prepare_encoder_outputs(self.encoder(pixel_values))
 
         return self.decoder(
             encoder_outputs=encoder_outputs,
@@ -101,15 +101,38 @@ class XrayReportGeneration(PreTrainedModel):
             decoder_input_ids=decoder_input_ids
         )
 
-    def get_encoder(self) -> AutoModelForSeq2SeqLM:
+    def get_encoder(self) -> torch.nn.Module:
         """Return a copy of the model encoder."""
-        return deepcopy(self.encoder)
+        class DummyEncoder(torch.nn.Module):
+            def __init__(self, model) -> None:
+                super().__init__()
+                self.model = deepcopy(model)
 
+            def forward(self, **kwargs):
+                outputs = self.model.forward(
+                    pixel_values=kwargs['pixel_values'],
+                    output_hidden_states=kwargs['output_hidden_states'],
+                    return_dict=kwargs['return_dict'],
+                )
+                return XrayReportGeneration.prepare_encoder_outputs(outputs)
+
+        return DummyEncoder(self.encoder)
+
+    @staticmethod
     def prepare_inputs_for_generation(
-        self, input_ids: torch.LongTensor, encoder_outputs: OrderedDict, **kwargs
+        input_ids: torch.LongTensor, encoder_outputs: OrderedDict, **kwargs
     ) -> dict[str, torch.LongTensor | OrderedDict]:
         """Custom behavior to prepare inputs in the generate method."""
         return {
             'decoder_input_ids': input_ids,
             'encoder_outputs': encoder_outputs
         }
+
+    @staticmethod
+    def prepare_encoder_outputs(encoder_outputs: OrderedDict) -> OrderedDict:
+        """Custom behavior to prepare encoder outputs for decoder."""
+        if len(encoder_outputs['last_hidden_state'].size()) == 4:
+            encoder_outputs['last_hidden_state'] = encoder_outputs['last_hidden_state'] \
+                .permute(0, 2, 3, 1) \
+                .flatten(start_dim=1, end_dim=2)
+        return encoder_outputs
