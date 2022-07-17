@@ -3,5 +3,5 @@
 pip install -r requirements-dev.txt
 pip install -e .
 pre-commit install
-npm i -g gitmoji-cli
+npm install --location=global gitmoji-cli
 gitmoji -i

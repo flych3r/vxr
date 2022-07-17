@@ -6,14 +6,21 @@
         "datamodule",
         "dtype",
         "logits",
+        "matplotlib",
         "optim",
+        "Overfit",
+        "overfitting",
         "preds",
         "pretrained",
+        "pyplot",
         "resnet",
         "softmax",
         "timm",
         "topk",
+        "tqdm",
         "typer",
-        "unsqueeze"
+        "unsqueeze",
+        "xrrg",
+        "ylabel"
     ]
 }
