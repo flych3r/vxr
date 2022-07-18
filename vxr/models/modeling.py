@@ -31,13 +31,14 @@ class XrayReportGeneration(PreTrainedModel):
 
     def _create_encoder(self) -> AutoModel:
         """Creates model encoder using config."""
+        encoder: AutoModel
         if self.config.use_pretrained_encoder:
-            encoder: AutoModel = AutoModel.from_pretrained(  # type: ignore[no-redef]  # noqa: E501
-                self.config.pretrained_encoder.name_or_path
+            encoder = AutoModel.from_pretrained(
+                self.config.encoder_config.name_or_path
             )
         else:
-            encoder: AutoModel = AutoModel.from_config(  # type: ignore[no-redef]  # noqa: E501
-                self.config.pretrained_encoder
+            encoder = AutoModel.from_config(
+                self.config.encoder_config
             )
 
         if self.config.freeze_encoder:
@@ -49,14 +50,16 @@ class XrayReportGeneration(PreTrainedModel):
 
     def _create_decoder(self) -> AutoModelForSeq2SeqLM:
         """Creates model decoder using config."""
+        decoder: AutoModelForSeq2SeqLM
         if self.config.use_pretrained_decoder:
-            decoder: AutoModelForSeq2SeqLM = AutoModelForSeq2SeqLM.from_pretrained(  # type: ignore[no-redef]  # noqa: E501
-                self.config.pretrained_decoder.name_or_path
+            decoder = AutoModelForSeq2SeqLM.from_pretrained(
+                self.config.decoder_config.name_or_path
             )
         else:
-            decoder: AutoModelForSeq2SeqLM = AutoModelForSeq2SeqLM.from_config(  # type: ignore[no-redef]  # noqa: E501
-                self.config.pretrained_decoder
+            decoder = AutoModelForSeq2SeqLM.from_config(
+                self.config.decoder_config
             )
+
         if self.config.freeze_decoder:
             for param in decoder.parameters():
                 param.requires_grad = False
