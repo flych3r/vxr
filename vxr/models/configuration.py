@@ -16,8 +16,8 @@ class XrayReportGenerationConfig(PretrainedConfig):
 
     def __init__(
         self,
-        pretrained_encoder: str | dict = 'google/vit-base-patch16-224-in21k',
-        pretrained_decoder: str | dict = 'google/t5-efficient-base',
+        encoder_config: str | PretrainedConfig = 'google/vit-base-patch16-224-in21k',
+        decoder_config: str | PretrainedConfig = 'google/t5-efficient-base',
         use_pretrained_encoder: bool = True,
         use_pretrained_decoder: bool = True,
         freeze_encoder: bool = False,
@@ -40,14 +40,35 @@ class XrayReportGenerationConfig(PretrainedConfig):
         """
         super().__init__(**kwargs)
 
-        self.pretrained_encoder = AutoConfig.from_pretrained(pretrained_encoder)
-        self.pretrained_decoder = AutoConfig.from_pretrained(pretrained_decoder)
+        self.encoder_config = encoder_config
+        self.decoder_config = decoder_config
+        self.use_pretrained_encoder = False
+        self.use_pretrained_decoder = False
+
+        if isinstance(self.encoder_config, str):
+            self.encoder_config = AutoConfig.from_pretrained(self.encoder_config)
+            self.use_pretrained_encoder = use_pretrained_encoder
+
+        if isinstance(self.decoder_config, str):
+            self.decoder_config = AutoConfig.from_pretrained(self.decoder_config)
+            self.use_pretrained_decoder = use_pretrained_decoder
+
+        if isinstance(self.encoder_config, dict):
+            encoder_type = self.encoder_config['model_type']
+            encoder_type_config = AutoConfig.for_model(encoder_type)
+            self.encoder_config = encoder_type_config.from_dict(self.encoder_config)
+
+        if isinstance(self.decoder_config, dict):
+            decoder_type = self.decoder_config['model_type']
+            decoder_type_config = AutoConfig.for_model(decoder_type)
+            self.decoder_config = decoder_type_config.from_dict(self.decoder_config)
+
         enc_size = (
-            self.pretrained_encoder.hidden_size
-            if hasattr(self.pretrained_encoder, 'hidden_size')
-            else self.pretrained_encoder.hidden_sizes[-1]
+            self.encoder_config.hidden_size
+            if hasattr(self.encoder_config, 'hidden_size')
+            else self.encoder_config.hidden_sizes[-1]
         )
-        dec_size = self.pretrained_decoder.d_model
+        dec_size = self.decoder_config.d_model
         if enc_size != dec_size:
             raise ValueError(
                 f'Encoder and Decoder must have same sizes ({enc_size} != {dec_size})'
@@ -55,15 +76,13 @@ class XrayReportGenerationConfig(PretrainedConfig):
 
         self.dim = enc_size
         self.architectures = (
-            self.pretrained_encoder.architectures
-            + self.pretrained_decoder.architectures
+            self.encoder_config.architectures
+            + self.decoder_config.architectures
         )
-        self.use_pretrained_encoder = use_pretrained_encoder
-        self.use_pretrained_decoder = use_pretrained_decoder
         self.freeze_encoder = freeze_encoder
         self.freeze_decoder = freeze_decoder
         self.is_encoder_decoder = True
-        self.decoder_start_token_id = self.pretrained_decoder.pad_token_id
+        self.decoder_start_token_id = self.decoder_config.pad_token_id
 
     def to_json_string(self, use_diff: bool = True) -> str:
         """Serializes this instance to a JSON string.
@@ -83,10 +102,16 @@ class XrayReportGenerationConfig(PretrainedConfig):
             config_dict = self.to_diff_dict()
         else:
             config_dict = self.to_dict()
-        config_dict['pretrained_encoder'] = config_dict.pop(
-            'pretrained_encoder'
-        ).to_dict()
-        config_dict['pretrained_decoder'] = config_dict.pop(
-            'pretrained_decoder'
-        ).to_dict()
+
+        encoder_config = config_dict.pop('encoder_config')
+        decoder_config = config_dict.pop('decoder_config')
+
+        if not isinstance(encoder_config, dict):
+            encoder_config = encoder_config.to_dict()
+        if not isinstance(decoder_config, dict):
+            decoder_config = decoder_config.to_dict()
+
+        config_dict['encoder_config'] = encoder_config
+        config_dict['decoder_config'] = decoder_config
+
         return json.dumps(config_dict, indent=2, sort_keys=True) + '\n'
