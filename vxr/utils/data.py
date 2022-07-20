@@ -22,7 +22,7 @@ class XrayReportDataset(Dataset):
         ann_path: Path,
         max_length: int,
         tokenizer: AutoTokenizer,
-        transforms: AutoFeatureExtractor,
+        feature_extractor: AutoFeatureExtractor,
         sample: float = 1.0,
         seed: int = None
     ):
@@ -34,7 +34,7 @@ class XrayReportDataset(Dataset):
             ann_path: path to annotations json
             max_length: maximum size of the tokenizer ids output
             tokenizer: text tokenizer
-            transforms: image transformations
+            feature_extractor: image transformations
             sample: amount of reduced data to sample
             seed: seed for sampling
         """
@@ -45,7 +45,7 @@ class XrayReportDataset(Dataset):
         self.ann_path = ann_path
         self.max_length = max_length
         self.tokenizer = tokenizer
-        self.transforms = transforms
+        self.feature_extractor = feature_extractor
         self.sample = sample
 
         with open(self.ann_path, 'r') as f:
@@ -74,7 +74,7 @@ class XrayReportDataset(Dataset):
         """
         item = self.data[index]
         image = Image.open(self.image_dir / item['image_path'][0]).convert('RGB')
-        image_transformed = self.transforms(image, return_tensors='pt')
+        image_transformed = self.feature_extractor(image, return_tensors='pt')
 
         tokens = self.tokenizer(
             item['report'],
