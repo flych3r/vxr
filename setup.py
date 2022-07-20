@@ -11,7 +11,7 @@ with open('requirements.txt') as f:
 LICENSE = 'MIT License'
 
 CLASSIFIERS = [
-    'Development Status :: 1 - Planning',
+    'Development Status :: 4 - Beta',
     'Programming Language :: Python :: 3',
     'Operating System :: OS Independent',
 ]
@@ -20,7 +20,7 @@ if LICENSE:
 
 setup(
     name='vxr',
-    version='0.0.1',
+    version='0.1.0',
     author='Matheus Xavier Sampaio',
     author_email='matheus.sampaio011@gmail.com',
     license=LICENSE,
@@ -28,7 +28,7 @@ setup(
     description='Generate chest X-ray reports using Vision Transformers',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    url='https://github.com/flych3r/vxr',
+    url='https://github.com/flych3r/xrrg',
     packages=find_packages(),
     classifiers=CLASSIFIERS,
     install_requires=DEPENDENCIES,
